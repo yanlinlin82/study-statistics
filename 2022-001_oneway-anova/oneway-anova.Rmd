@@ -1,0 +1,91 @@
+---
+title: "Oneway Anova"
+---
+
+## Reference Links
+
+* <http://www.360doc.com/content/20/0808/03/70936332_929117402.shtml>
+* <http://www.sthda.com/english/wiki/one-way-anova-test-in-r>
+* <https://datascienceplus.com/one-way-anova-in-r/>
+
+## Analysis Procedure
+
+### Data Preparation
+
+```{r, echo = TRUE}
+library(tidyverse)
+
+a <- tibble(control = c(3.6, 4.2, 3.7, 7.0, 5.0, 4.5, 4.4, 5.6, 4.4, 4.5),
+            treatment_1 = c(3.0, 2.4, 4.0, 2.7, 2.6, 2.3, 1.1, 3.7, 1.9, 1.3),
+            treatment_2 = c(0.4, 2.3, 3.6, 3.2, 2.1, 1.7, 4.7, 1.3, 3.0, 2.5),
+            treatment_3 = c(3.3, 0.0, 3.0, 0.6, 1.2, 1.2, 2.7, 3.2, 1.4, 2.1))
+print(a)
+
+b <- a %>%
+  pivot_longer(cols = c("control", "treatment_1", "treatment_2", "treatment_3"))
+print(b)
+```
+
+### Summarization
+
+```{r, echo = TRUE}
+b %>%
+  group_by(name) %>%
+  summarize(count = n(), mean = mean(value), sd = sd(value))
+```
+
+### Visualization
+
+```{r, echo = TRUE}
+b %>%
+  ggplot(aes(x = name, y = value)) +
+  geom_violin() +
+  geom_point(position = "jitter")
+```
+
+### AOV
+
+```{r, echo = TRUE}
+m <- aov(value ~ name, data = b)
+print(m)
+summary(m)
+```
+
+### Tukey multiple pairwise-comparison
+
+```{r, echo = TRUE}
+TukeyHSD(m)
+```
+
+### Pairwise t-test
+
+```{r, echo = TRUE}
+pairwise.t.test(b$value, b$name, p.adjust.method = "BH")
+```
+
+### Levene's test
+
+```{r, echo = TRUE}
+library(car)
+leveneTest(value ~ name, data = b)
+```
+
+### Relaxing the homogeneity of variance assumption
+
+```{r, echo = TRUE}
+oneway.test(value ~ name, data = b)
+
+pairwise.t.test(b$value, b$name, p.adjust.method = "BH", pool.sd = FALSE)
+```
+
+### Non-parametric test
+
+```{r, echo = FALSE}
+kruskal.test(value ~ name, data = b)
+```
+
+## Session Info
+
+```{r}
+sessionInfo()
+```
